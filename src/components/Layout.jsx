@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { ClipboardList, Wrench, CheckCircle, DollarSign, Menu } from 'lucide-react';
+import { ClipboardList, Wrench, CheckCircle, DollarSign, LayoutDashboard } from 'lucide-react';
 import clsx from 'clsx';
+import MechanicsManager from './MechanicsManager';
 
 export default function Layout({ children, currentTab, setCurrentTab }) {
   const tabs = [
+    { id: 'dashboard', label: 'Tablero', icon: LayoutDashboard },
     { id: 'recepcion', label: 'Recepción', icon: ClipboardList },
     { id: 'diagnostico', label: 'Diagnóstico', icon: Wrench },
     { id: 'taller', label: 'Taller', icon: CheckCircle },
@@ -13,18 +15,25 @@ export default function Layout({ children, currentTab, setCurrentTab }) {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center">
+      <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center print:hidden">
         <h1 className="text-xl font-bold tracking-wider">FD Auto Repair</h1>
-        <div className="text-sm opacity-75">Manager v1.0</div>
+        <div className="text-sm opacity-75">Manager v2.0</div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4">
+      <main className="flex-1 overflow-y-auto p-4 print:p-0 print:overflow-visible">
         {children}
+
+        {/* Mechanics Manager Footer (Only visible on Dashboard) */}
+        {currentTab === 'dashboard' && (
+           <div className="max-w-6xl mx-auto print:hidden pb-20">
+             <MechanicsManager />
+           </div>
+        )}
       </main>
 
       {/* Persistent Bottom Navigation (Mobile Friendly) */}
-      <nav className="bg-white border-t border-gray-200 flex justify-around p-2 pb-safe shadow-lg">
+      <nav className="bg-white border-t border-gray-200 flex justify-around p-2 pb-safe shadow-lg print:hidden">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;

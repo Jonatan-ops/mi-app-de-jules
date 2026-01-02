@@ -4,12 +4,15 @@ import Reception from './components/Reception';
 import Diagnosis from './components/Diagnosis';
 import Workshop from './components/Workshop';
 import Cashier from './components/Cashier';
+import Dashboard from './components/Dashboard';
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('recepcion');
+  const [currentTab, setCurrentTab] = useState('dashboard');
 
   const renderContent = () => {
     switch (currentTab) {
+      case 'dashboard':
+        return <Dashboard />;
       case 'recepcion':
         return <Reception />;
       case 'diagnostico':
@@ -19,7 +22,7 @@ function App() {
       case 'caja':
         return <Cashier />;
       default:
-        return <Reception />;
+        return <Dashboard />;
     }
   };
 
