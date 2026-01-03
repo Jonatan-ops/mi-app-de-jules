@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardList, Wrench, CheckCircle, DollarSign, LayoutDashboard } from 'lucide-react';
+import { ClipboardList, Wrench, CheckCircle, DollarSign, LayoutDashboard, History, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import MechanicsManager from './MechanicsManager';
 
@@ -10,6 +10,7 @@ export default function Layout({ children, currentTab, setCurrentTab }) {
     { id: 'diagnostico', label: 'Diagnóstico', icon: Wrench },
     { id: 'taller', label: 'Taller', icon: CheckCircle },
     { id: 'caja', label: 'Caja', icon: DollarSign },
+    { id: 'record', label: 'Historial', icon: History },
   ];
 
   return (
@@ -17,7 +18,7 @@ export default function Layout({ children, currentTab, setCurrentTab }) {
       {/* Header */}
       <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center print:hidden">
         <h1 className="text-xl font-bold tracking-wider">FD Auto Repair</h1>
-        <div className="text-sm opacity-75">Manager v2.0</div>
+        <div className="text-sm opacity-75">Manager v2.1</div>
       </header>
 
       {/* Main Content Area */}
@@ -33,7 +34,7 @@ export default function Layout({ children, currentTab, setCurrentTab }) {
       </main>
 
       {/* Persistent Bottom Navigation (Mobile Friendly) */}
-      <nav className="bg-white border-t border-gray-200 flex justify-around p-2 pb-safe shadow-lg print:hidden">
+      <nav className="bg-white border-t border-gray-200 flex justify-around p-2 pb-safe shadow-lg print:hidden overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;
@@ -42,12 +43,12 @@ export default function Layout({ children, currentTab, setCurrentTab }) {
               key={tab.id}
               onClick={() => setCurrentTab(tab.id)}
               className={clsx(
-                "flex flex-col items-center p-2 rounded-lg w-full transition-colors duration-200",
+                "flex flex-col items-center p-2 rounded-lg min-w-[60px] w-full transition-colors duration-200",
                 isActive ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:bg-gray-50"
               )}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-xs mt-1 font-medium">{tab.label}</span>
+              <span className="text-xs mt-1 font-medium whitespace-nowrap">{tab.label}</span>
             </button>
           );
         })}

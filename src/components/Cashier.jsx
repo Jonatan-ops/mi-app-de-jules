@@ -8,6 +8,7 @@ export default function Cashier() {
   const orders = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.LISTO).toArray());
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [printMode, setPrintMode] = useState(false);
+  const [warranty, setWarranty] = useState('');
 
   const selectedOrder = useLiveQuery(
     () => selectedOrderId ? db.orders.get(selectedOrderId) : null,
@@ -20,10 +21,12 @@ export default function Cashier() {
       await db.orders.update(selectedOrder.id, {
         status: ORDER_STATUS.PAGADO,
         paymentMethod: method,
-        paidAt: new Date().toISOString()
+        paidAt: new Date().toISOString(),
+        warranty: warranty // Save warranty info
       });
       setSelectedOrderId(null);
       setPrintMode(false);
+      setWarranty('');
       alert("Pago registrado y orden cerrada exitosamente.");
     }
   };
@@ -43,6 +46,7 @@ export default function Cashier() {
            <div>
              <p><strong>Fecha:</strong> {new Date().toLocaleDateString()}</p>
              <p><strong>Factura #:</strong> {selectedOrder.id}</p>
+             {selectedOrder.isMaintenance && <p className="mt-2 font-bold uppercase border border-black inline-block px-2">Mantenimiento Preventivo</p>}
            </div>
            <div className="text-right">
              <p><strong>Cliente:</strong> {selectedOrder.client.name}</p>
@@ -79,8 +83,16 @@ export default function Cashier() {
            </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t text-center text-sm">
-           <p>¡Gracias por preferirnos!</p>
+        <div className="mt-16 pt-8 border-t text-sm">
+           <div className="grid grid-cols-2 gap-8">
+             <div>
+                <p><strong>Garantía:</strong> {warranty || 'Según ley'}</p>
+                {selectedOrder.commitmentDate && <p><strong>Fecha Promesa:</strong> {new Date(selectedOrder.commitmentDate).toLocaleDateString()}</p>}
+             </div>
+             <div className="text-right">
+                <p>¡Gracias por preferirnos!</p>
+             </div>
+           </div>
         </div>
 
         {/* No-Print Controls */}
@@ -121,6 +133,17 @@ export default function Cashier() {
           <div className="flex justify-between text-lg">
             <span>Total a Pagar:</span>
             <span className="font-bold text-2xl">{formatCurrency(selectedOrder.totals.total)}</span>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Tiempo de Garantía</label>
+            <input
+               type="text"
+               placeholder="Ej: 3 Meses en mano de obra"
+               className="w-full p-2 border rounded"
+               value={warranty}
+               onChange={(e) => setWarranty(e.target.value)}
+            />
           </div>
         </div>
 

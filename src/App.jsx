@@ -5,6 +5,8 @@ import Diagnosis from './components/Diagnosis';
 import Workshop from './components/Workshop';
 import Cashier from './components/Cashier';
 import Dashboard from './components/Dashboard';
+import VehicleHistory from './components/VehicleHistory';
+import MaintenanceControl from './components/MaintenanceControl';
 
 function App() {
   const [currentTab, setCurrentTab] = useState('dashboard');
@@ -12,7 +14,7 @@ function App() {
   const renderContent = () => {
     switch (currentTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard setCurrentTab={setCurrentTab} />;
       case 'recepcion':
         return <Reception />;
       case 'diagnostico':
@@ -21,8 +23,12 @@ function App() {
         return <Workshop />;
       case 'caja':
         return <Cashier />;
+      case 'record':
+        return <VehicleHistory />;
+      case 'mantenimiento':
+        return <MaintenanceControl />;
       default:
-        return <Dashboard />;
+        return <Dashboard setCurrentTab={setCurrentTab} />;
     }
   };
 

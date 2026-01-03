@@ -15,6 +15,8 @@ export default function Diagnosis() {
   const [mechanicId, setMechanicId] = useState('');
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({ description: '', type: 'labor', price: '', quantity: 1 });
+  const [commitmentDate, setCommitmentDate] = useState('');
+  const [isMaintenance, setIsMaintenance] = useState(false);
   const [printMode, setPrintMode] = useState(false);
 
   const selectedOrder = useLiveQuery(
@@ -22,7 +24,6 @@ export default function Diagnosis() {
     [selectedOrderId]
   );
 
-  // Also fetch assigned mechanic for print view
   const assignedMechanic = useLiveQuery(
     () => mechanicId ? db.mechanics.get(parseInt(mechanicId)) : null,
     [mechanicId]
@@ -33,6 +34,8 @@ export default function Diagnosis() {
     setDiagnosis(order.diagnosis || '');
     setMechanicId(order.mechanicId || '');
     setItems(order.items || []);
+    setCommitmentDate(order.commitmentDate || '');
+    setIsMaintenance(order.isMaintenance || false);
     setPrintMode(false);
   };
 
@@ -64,11 +67,15 @@ export default function Diagnosis() {
       mechanicId: parseInt(mechanicId),
       items,
       totals,
+      commitmentDate,
+      isMaintenance,
       status: ORDER_STATUS.APROBACION
     });
     setSelectedOrderId(null);
     setDiagnosis('');
     setItems([]);
+    setCommitmentDate('');
+    setIsMaintenance(false);
     alert("Presupuesto generado y enviado a aprobación.");
   };
 
@@ -86,6 +93,7 @@ export default function Diagnosis() {
           <div className="text-right">
              <h2 className="text-xl font-bold">Orden #{selectedOrder.id}</h2>
              <p className="text-sm">Mecánico: {assignedMechanic ? assignedMechanic.code : 'N/A'}</p>
+             {isMaintenance && <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-xs font-bold uppercase">Mantenimiento</span>}
           </div>
         </div>
 
@@ -136,8 +144,10 @@ export default function Diagnosis() {
            </div>
         </div>
 
-        <div className="mt-16 text-center text-xs text-gray-500 border-t pt-4">
-           <p>Este documento es un presupuesto válido por 15 días.</p>
+        <div className="mt-12 text-sm text-gray-700">
+           {commitmentDate && <p><strong>Fecha compromiso de entrega:</strong> {new Date(commitmentDate).toLocaleDateString()}</p>}
+           <p className="mt-2 text-xs italic">* Este presupuesto está sujeto a cambios durante la reparación.</p>
+           <p className="text-xs italic">* Válido por 15 días.</p>
         </div>
 
         {/* No-Print Controls */}
@@ -208,19 +218,44 @@ export default function Diagnosis() {
       </div>
 
       <div className="space-y-6">
-        {/* Asignar Mecánico */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">Asignar Mecánico Responsable</label>
-          <select
-            value={mechanicId}
-            onChange={(e) => setMechanicId(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Seleccionar --</option>
-            {mechanics?.map(m => (
-              <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
-            ))}
-          </select>
+        {/* Asignar Mecánico & Detalles */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Asignar Mecánico Responsable</label>
+            <select
+              value={mechanicId}
+              onChange={(e) => setMechanicId(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Seleccionar --</option>
+              {mechanics?.map(m => (
+                <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha Compromiso Entrega</label>
+            <input
+              type="date"
+              value={commitmentDate}
+              onChange={(e) => setCommitmentDate(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+           <input
+             type="checkbox"
+             id="isMaintenance"
+             checked={isMaintenance}
+             onChange={(e) => setIsMaintenance(e.target.checked)}
+             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+           />
+           <label htmlFor="isMaintenance" className="text-sm font-semibold text-slate-700 select-none">
+             Este trabajo es un Mantenimiento Preventivo
+           </label>
         </div>
 
         {/* Diagnóstico Técnico */}

@@ -2,8 +2,15 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('FDAutoRepairDB');
 
-db.version(1).stores({
-  orders: '++id, status, client.name, vehicle.plate, mechanicId',
+// Version 1: Initial
+// db.version(1).stores({
+//   orders: '++id, status, client.name, vehicle.plate, mechanicId',
+//   mechanics: '++id, name, code'
+// });
+
+// Version 2: Add indexes for maintenance and sorting
+db.version(2).stores({
+  orders: '++id, status, client.name, vehicle.plate, mechanicId, isMaintenance, createdAt',
   mechanics: '++id, name, code'
 });
 
