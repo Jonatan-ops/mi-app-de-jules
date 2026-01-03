@@ -5,7 +5,8 @@ export const ORDER_STATUS = {
   APROBACION: 'Pendiente Aprobación',
   REPARACION: 'En Reparación',
   LISTO: 'Listo',
-  PAGADO: 'Pagado'
+  PAGADO: 'Pagado',
+  CANCELADO: 'Cancelado'
 };
 
 export const formatCurrency = (amount) => {
