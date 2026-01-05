@@ -9,10 +9,15 @@ import Cashier from './components/Cashier';
 import Dashboard from './components/Dashboard';
 import VehicleHistory from './components/VehicleHistory';
 import MaintenanceControl from './components/MaintenanceControl';
+import UserManager from './components/UserManager';
 
 function AppContent() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium">Cargando sistema...</div>;
+  }
 
   if (!currentUser) {
     return <Login />;
@@ -34,6 +39,8 @@ function AppContent() {
         return <VehicleHistory />;
       case 'mantenimiento':
         return <MaintenanceControl />;
+      case 'usuarios':
+        return <UserManager />;
       default:
         return <Dashboard setCurrentTab={setCurrentTab} />;
     }

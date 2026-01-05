@@ -3,11 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Wrench, AlertCircle } from 'lucide-react';
-import { createUserWithEmailAndPassword } from 'firebase/auth'; // Temporary for sign up
-import { auth } from '../lib/firebase'; // Direct access for signup
-
 export default function Login() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,8 +18,7 @@ export default function Login() {
 
     try {
       if (isRegistering) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        // AuthContext will handle the rest (creating firestore doc)
+        await register(email, password, "Nuevo Taller");
       } else {
         await login(email, password);
       }

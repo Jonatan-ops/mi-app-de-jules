@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDt1STH3BQsD6rZqest2s-dBfk3odYJB2E",
   authDomain: "taller-db-20ee4.firebaseapp.com",
   projectId: "taller-db-20ee4",

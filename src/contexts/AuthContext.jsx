@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -11,32 +11,45 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null); // 'admin' | 'encargado' | null
+  const [userRole, setUserRole] = useState(null); // 'admin' | 'encargado' | 'mecanico'
+  const [companyId, setCompanyId] = useState(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Fetch role from Firestore
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+            // Fetch user profile
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-          setUserRole(userDoc.data().role);
-        } else {
-          // For demo purposes: Create the user doc with 'admin' role if it doesn't exist
-          // In production, this would be handled by an admin manually creating the user entry first.
-          await setDoc(userDocRef, {
-            email: user.email,
-            role: 'admin', // Defaulting to admin for the first user/demo convenience
-            createdAt: new Date()
-          });
-          setUserRole('admin');
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setUserRole(userData.role);
+              setCompanyId(userData.companyId);
+
+              // Fetch Company Data
+              if (userData.companyId) {
+                 const companyDoc = await getDoc(doc(db, 'companies', userData.companyId));
+                 if (companyDoc.exists()) {
+                     setCompany({ id: companyDoc.id, ...companyDoc.data() });
+                 }
+              }
+            } else {
+                // Legacy or Broken state: User exists in Auth but not in Firestore
+                // For recovery, we might treat them as admin of a new company or just log error.
+                console.error("User profile not found in Firestore.");
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
         }
         setCurrentUser(user);
       } else {
         setCurrentUser(null);
         setUserRole(null);
+        setCompanyId(null);
+        setCompany(null);
       }
       setLoading(false);
     });
@@ -48,6 +61,30 @@ export function AuthProvider({ children }) {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  const register = async (email, password, companyName = "Mi Taller") => {
+      // 1. Create Auth User
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Create Company Doc
+      const companyRef = await addDoc(collection(db, 'companies'), {
+          name: companyName,
+          createdAt: serverTimestamp(),
+          subscriptionStatus: 'active', // Default to active
+          ownerId: user.uid
+      });
+
+      // 3. Create User Profile linked to Company
+      await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          role: 'admin',
+          companyId: companyRef.id,
+          createdAt: serverTimestamp()
+      });
+
+      return user;
+  };
+
   const logout = () => {
     return signOut(auth);
   };
@@ -55,7 +92,10 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     userRole,
+    companyId,
+    company,
     login,
+    register,
     logout,
     loading
   };
