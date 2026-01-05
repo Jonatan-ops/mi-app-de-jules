@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useOrders } from '../lib/storage';
-import { PlusCircle } from 'lucide-react';
+import { db } from '../lib/db';
+import { ORDER_STATUS } from '../lib/constants';
+import { PlusCircle, Camera, X } from 'lucide-react';
 
 export default function Reception() {
-  const { addOrder } = useOrders();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -14,41 +14,68 @@ export default function Reception() {
     plate: '',
     issue: ''
   });
+  const [files, setFiles] = useState([]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles([...files, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.brand || !formData.issue) {
       alert("Por favor complete los campos obligatorios (Nombre, Vehículo, Motivo)");
       return;
     }
 
-    addOrder(
-      { name: formData.name, phone: formData.phone, email: formData.email },
-      { brand: formData.brand, model: formData.model, year: formData.year, plate: formData.plate },
-      formData.issue
-    );
+    try {
+      // Store files as Blobs
+      const fileBlobs = files; // Dexie handles Blobs directly
 
-    // Reset form
-    setFormData({
-      name: '',
-      phone: '',
-      email: '',
-      brand: '',
-      model: '',
-      year: '',
-      plate: '',
-      issue: ''
-    });
+      await db.orders.add({
+        createdAt: new Date().toISOString(),
+        status: ORDER_STATUS.RECEPCION,
+        client: { name: formData.name, phone: formData.phone, email: formData.email },
+        vehicle: { brand: formData.brand, model: formData.model, year: formData.year, plate: formData.plate },
+        issue: formData.issue,
+        diagnosis: '',
+        mechanicId: null,
+        items: [],
+        documents: fileBlobs, // Array of File objects (which are Blobs)
+        totals: { subtotal: 0, tax: 0, total: 0 }
+      });
 
-    alert("Orden creada exitosamente!");
+      // Reset
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        brand: '',
+        model: '',
+        year: '',
+        plate: '',
+        issue: ''
+      });
+      setFiles([]);
+      alert("Orden creada exitosamente!");
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar la orden.");
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-slate-800 border-b pb-2">Nueva Recepción</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -126,17 +153,50 @@ export default function Reception() {
           </div>
         </div>
 
-        {/* Motivo */}
+        {/* Motivo & Documentos */}
         <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <h3 className="font-semibold text-lg mb-4 text-slate-700">Motivo de Visita</h3>
+          <h3 className="font-semibold text-lg mb-4 text-slate-700">Motivo de Visita & Documentos</h3>
           <textarea
             name="issue"
             placeholder="Describa el problema o solicitud del cliente... *"
             value={formData.issue}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32"
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32 mb-4"
             required
           />
+
+          <div className="flex flex-col gap-3">
+             <label className="flex items-center gap-2 cursor-pointer bg-white border border-gray-300 rounded-lg p-3 hover:bg-gray-50 transition w-fit">
+                <Camera className="text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Adjuntar Fotos/Docs</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+             </label>
+
+             {files.length > 0 && (
+               <div className="flex flex-wrap gap-2">
+                 {files.map((file, idx) => (
+                   <div key={idx} className="relative group">
+                     <div className="text-xs bg-gray-200 px-2 py-1 rounded max-w-[150px] truncate">
+                       {file.name}
+                     </div>
+                     <button
+                       type="button"
+                       onClick={() => removeFile(idx)}
+                       className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                     >
+                       <X size={12} />
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             )}
+          </div>
         </div>
 
         <button
