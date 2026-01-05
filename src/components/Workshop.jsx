@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useOrders, updateOrder } from '../lib/firestoreService';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import { CheckCircle, Wrench, Clock, Plus, Trash2, Eye, X, Archive, AlertOctagon } from 'lucide-react';
 import { Card } from './ui/Card';
@@ -8,10 +7,14 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Workshop() {
-  const pendingApproval = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.APROBACION).toArray());
-  const inRepair = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.REPARACION).toArray());
+  const { userRole } = useAuth();
+  const { orders } = useOrders(); // Fetch all and filter locally for simplicity and speed
+
+  const pendingApproval = orders.filter(o => o.status === ORDER_STATUS.APROBACION);
+  const inRepair = orders.filter(o => o.status === ORDER_STATUS.REPARACION);
 
   // Edit Mode state
   const [editingOrderId, setEditingOrderId] = useState(null);
@@ -20,26 +23,25 @@ export default function Workshop() {
 
   // View Details Modal State
   const [viewOrderId, setViewOrderId] = useState(null);
-  const viewOrder = useLiveQuery(
-    () => viewOrderId ? db.orders.get(viewOrderId) : null,
-    [viewOrderId]
-  );
+
+  // Find viewOrder from orders list
+  const viewOrder = orders.find(o => o.id === viewOrderId);
 
   const handleApprove = async (orderId) => {
     if (confirm('¿Confirmar que el cliente aprobó el presupuesto?')) {
-      await db.orders.update(orderId, { status: ORDER_STATUS.REPARACION });
+      await updateOrder(orderId, { status: ORDER_STATUS.REPARACION });
     }
   };
 
   const handleDiscard = async (orderId) => {
     if (confirm('¿Está seguro de DESCARTAR este presupuesto? El cliente no aprobó.')) {
-      await db.orders.update(orderId, { status: ORDER_STATUS.CANCELADO });
+      await updateOrder(orderId, { status: ORDER_STATUS.CANCELADO });
     }
   };
 
   const handleFinish = async (orderId) => {
     if (confirm('¿Marcar trabajo como completado y listo para entrega?')) {
-      await db.orders.update(orderId, { status: ORDER_STATUS.LISTO });
+      await updateOrder(orderId, { status: ORDER_STATUS.LISTO });
     }
   };
 
@@ -65,7 +67,7 @@ export default function Workshop() {
     const tax = subtotal * 0.18;
     const total = subtotal + tax;
 
-    await db.orders.update(editingOrderId, {
+    await updateOrder(editingOrderId, {
       items: extraItems,
       totals: { subtotal, tax, total }
     });
@@ -161,9 +163,12 @@ export default function Workshop() {
                 <Button variant="primary" onClick={() => handleApprove(order.id)} className="flex-1 bg-orange-500 hover:bg-orange-600 shadow-orange-500/30">
                   Aprobar
                 </Button>
-                <Button variant="danger" onClick={() => handleDiscard(order.id)} className="flex-none px-3" title="Descartar Presupuesto">
-                  <Trash2 size={16} />
-                </Button>
+                {/* Only Admin can discard */}
+                {userRole === 'admin' && (
+                  <Button variant="danger" onClick={() => handleDiscard(order.id)} className="flex-none px-3" title="Descartar Presupuesto">
+                    <Trash2 size={16} />
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
 import Layout from './components/Layout';
 import Reception from './components/Reception';
 import Diagnosis from './components/Diagnosis';
@@ -8,8 +10,13 @@ import Dashboard from './components/Dashboard';
 import VehicleHistory from './components/VehicleHistory';
 import MaintenanceControl from './components/MaintenanceControl';
 
-function App() {
+function AppContent() {
+  const { currentUser } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
+
+  if (!currentUser) {
+    return <Login />;
+  }
 
   const renderContent = () => {
     switch (currentTab) {
@@ -39,4 +46,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}

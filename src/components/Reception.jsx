@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { db } from '../lib/db';
+import { createOrder } from '../lib/firestoreService';
 import { ORDER_STATUS } from '../lib/constants';
 import { PlusCircle, Camera, X } from 'lucide-react';
 
@@ -15,6 +15,7 @@ export default function Reception() {
     issue: ''
   });
   const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,13 +38,10 @@ export default function Reception() {
       alert("Por favor complete los campos obligatorios (Nombre, Vehículo, Motivo)");
       return;
     }
+    setLoading(true);
 
     try {
-      // Store files as Blobs
-      const fileBlobs = files; // Dexie handles Blobs directly
-
-      await db.orders.add({
-        createdAt: new Date().toISOString(),
+      const orderData = {
         status: ORDER_STATUS.RECEPCION,
         client: { name: formData.name, phone: formData.phone, email: formData.email },
         vehicle: { brand: formData.brand, model: formData.model, year: formData.year, plate: formData.plate },
@@ -51,9 +49,10 @@ export default function Reception() {
         diagnosis: '',
         mechanicId: null,
         items: [],
-        documents: fileBlobs, // Array of File objects (which are Blobs)
         totals: { subtotal: 0, tax: 0, total: 0 }
-      });
+      };
+
+      await createOrder(orderData, files);
 
       // Reset
       setFormData({
@@ -70,7 +69,9 @@ export default function Reception() {
       alert("Orden creada exitosamente!");
     } catch (error) {
       console.error(error);
-      alert("Error al guardar la orden.");
+      alert("Error al guardar la orden: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -201,10 +202,15 @@ export default function Reception() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95 transform transition-transform"
+          disabled={loading}
+          className={`w-full bg-blue-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95 transform transition-transform ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
-          <PlusCircle size={24} />
-          Abrir Orden de Servicio
+          {loading ? 'Subiendo...' : (
+             <>
+               <PlusCircle size={24} />
+               Abrir Orden de Servicio
+             </>
+          )}
         </button>
       </form>
     </div>

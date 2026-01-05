@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useOrders } from '../lib/firestoreService';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import {
   ClipboardCheck,
@@ -15,26 +14,32 @@ import {
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
+import { useAuth } from '../contexts/AuthContext';
+import MechanicsManager from './MechanicsManager'; // Ensure this is imported if not already but in original it was in Layout or here?
+// Original code had MechanicsManager in Layout or Dashboard?
+// Ah, previous step I saw MechanicsManager in Layout.jsx but user asked to restore sidebar.
+// In the Sidebar Layout, MechanicsManager was in the Main Content at the bottom if tab===dashboard.
+// But here Dashboard.jsx didn't export it.
+// Let's check where it should be. The user said "Only Admin can create/delete mechanics".
+// It is better placed inside Dashboard as a widget or section visible only to Admin.
 
 export default function Dashboard({ setCurrentTab }) {
+  const { userRole } = useAuth();
+  const { orders } = useOrders(); // Real-time fetch
+
   const [searchTerm, setSearchTerm] = useState('');
   const [viewOrderId, setViewOrderId] = useState(null);
 
-  // Metrics Queries
-  const countReception = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.RECEPCION).count());
-  const countApproval = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.APROBACION).count());
-  const countRepair = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.REPARACION).count());
-  const countReady = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.LISTO).count());
+  // Metrics Calculation
+  const countReception = orders.filter(o => o.status === ORDER_STATUS.RECEPCION).length;
+  const countApproval = orders.filter(o => o.status === ORDER_STATUS.APROBACION).length;
+  const countRepair = orders.filter(o => o.status === ORDER_STATUS.REPARACION).length;
+  const countReady = orders.filter(o => o.status === ORDER_STATUS.LISTO).length;
 
-  // Search Query
-  const searchResults = useLiveQuery(async () => {
-    let collection = db.orders.orderBy('createdAt').reverse();
-    const all = await collection.toArray();
-
-    if (!searchTerm) return all.slice(0, 10); // Limit recent orders
-
-    const lowerTerm = searchTerm.toLowerCase();
-    return all.filter(order => {
+  // Search Filter
+  const searchResults = orders.filter(order => {
+       if (!searchTerm) return true;
+       const lowerTerm = searchTerm.toLowerCase();
        const clientName = order.client.name.toLowerCase();
        const plate = order.vehicle.plate.toLowerCase();
        const brand = order.vehicle.brand.toLowerCase();
@@ -44,13 +49,9 @@ export default function Dashboard({ setCurrentTab }) {
               plate.includes(lowerTerm) ||
               brand.includes(lowerTerm) ||
               status.includes(lowerTerm);
-    });
-  }, [searchTerm]);
+  }).slice(0, 10); // Limit to 10 for display
 
-  const viewOrder = useLiveQuery(
-    () => viewOrderId ? db.orders.get(viewOrderId) : null,
-    [viewOrderId]
-  );
+  const viewOrder = orders.find(o => o.id === viewOrderId);
 
   const StatCard = ({ title, count, icon: Icon, colorClass, onClick, badge }) => (
     <div

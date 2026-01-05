@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useMechanics, addMechanic, deleteMechanic } from '../lib/firestoreService';
 import { Users, Plus, Trash2 } from 'lucide-react';
 
 export default function MechanicsManager() {
-  const mechanics = useLiveQuery(() => db.mechanics.toArray());
+  const { mechanics } = useMechanics();
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
   const handleAdd = async () => {
     if (!newName || !newCode) return;
-    await db.mechanics.add({ name: newName, code: newCode });
+    await addMechanic({ name: newName, code: newCode });
     setNewName('');
     setNewCode('');
   };
 
   const handleDelete = async (id) => {
     if (confirm('¿Eliminar mecánico?')) {
-      await db.mechanics.delete(id);
+      await deleteMechanic(id);
     }
   };
 

@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useOrders, updateOrder } from '../lib/firestoreService';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import { DollarSign, Printer, X, Check } from 'lucide-react';
 
 export default function Cashier() {
-  const orders = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.LISTO).toArray());
+  const { orders } = useOrders(ORDER_STATUS.LISTO);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [printMode, setPrintMode] = useState(false);
   const [warranty, setWarranty] = useState('');
 
-  const selectedOrder = useLiveQuery(
-    () => selectedOrderId ? db.orders.get(selectedOrderId) : null,
-    [selectedOrderId]
-  );
+  const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
   const handlePayment = async (method) => {
     if (!selectedOrder) return;
     if (confirm(`¿Confirmar pago de ${formatCurrency(selectedOrder.totals.total)} vía ${method}?`)) {
-      await db.orders.update(selectedOrder.id, {
+      await updateOrder(selectedOrder.id, {
         status: ORDER_STATUS.PAGADO,
         paymentMethod: method,
         paidAt: new Date().toISOString(),

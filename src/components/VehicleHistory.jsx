@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useOrders } from '../lib/firestoreService';
 import { formatCurrency } from '../lib/constants';
 import { Search, Archive, Calendar, User, FileText, Download, Phone, Mail } from 'lucide-react';
 import { Card } from './ui/Card';
@@ -10,28 +9,23 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
 export default function VehicleHistory() {
+  const { orders } = useOrders(); // Fetch all
   const [searchTerm, setSearchTerm] = useState('');
   const [viewOrderId, setViewOrderId] = useState(null);
 
-  const history = useLiveQuery(async () => {
-    let collection = db.orders.orderBy('createdAt').reverse();
-    if (searchTerm) {
-       const term = searchTerm.toLowerCase();
-       const all = await collection.toArray();
-       return all.filter(o =>
+  // Filter locally
+  const history = orders.filter(o => {
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      return (
           o.vehicle.plate.toLowerCase().includes(term) ||
           o.vehicle.brand.toLowerCase().includes(term) ||
           o.vehicle.model.toLowerCase().includes(term) ||
           o.client.name.toLowerCase().includes(term)
-       );
-    }
-    return await collection.toArray();
-  }, [searchTerm]);
+      );
+  });
 
-  const viewOrder = useLiveQuery(
-    () => viewOrderId ? db.orders.get(viewOrderId) : null,
-    [viewOrderId]
-  );
+  const viewOrder = orders.find(o => o.id === viewOrderId);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -185,8 +179,9 @@ export default function VehicleHistory() {
                         {viewOrder.documents.map((doc, idx) => (
                            <div key={idx} className="flex justify-between items-center p-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">
                               <span className="truncate flex-1 pr-4">{doc.name}</span>
+                              {/* NOTE: With Firestore/Storage, doc.url is the link. */}
                               <a
-                                 href={URL.createObjectURL(doc)}
+                                 href={doc.url}
                                  target="_blank"
                                  rel="noopener noreferrer"
                                  className="text-blue-600 hover:underline text-xs font-bold flex items-center gap-1"

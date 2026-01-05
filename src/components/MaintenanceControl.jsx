@@ -1,24 +1,19 @@
-import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
-import { Calendar, AlertCircle, Phone, Car } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { useOrders } from '../lib/firestoreService';
+import { Calendar, AlertCircle, Phone, Car, CheckCircle } from 'lucide-react';
 
 export default function MaintenanceControl() {
-  const maintenanceData = useLiveQuery(async () => {
-     // Get all orders marked as maintenance
-     const maintenanceOrders = await db.orders.where('isMaintenance').equals('true').toArray(); // Index stores boolean as 1/0 or we might need to check how dexie stored it.
-     // Dexie stores booleans as is. But queries might need check.
-     // Let's fetch all and filter to be safe if index isn't perfectly mapped or updated yet
-     const allOrders = await db.orders.toArray();
+  const { orders } = useOrders(); // Fetch all
 
-     // Filter manually for robustness
-     const maintOrders = allOrders.filter(o => o.isMaintenance);
+  const maintenanceData = useMemo(() => {
+     // Filter manually
+     const maintOrders = orders.filter(o => o.isMaintenance);
 
      // Group by Plate to find LAST maintenance date
      const map = {};
      maintOrders.forEach(order => {
         const plate = order.vehicle.plate;
-        const date = new Date(order.createdAt); // or paidAt
+        const date = new Date(order.createdAt); // Firestore orders are ISO strings or Date objects handled in service
 
         if (!map[plate] || date > map[plate].date) {
            map[plate] = {
@@ -41,10 +36,10 @@ export default function MaintenanceControl() {
      });
 
      return dueList.sort((a,b) => a.date - b.date); // Oldest due first
-  });
+  }, [orders]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
        <div className="flex items-center gap-2 mb-6 text-amber-600">
           <AlertCircle size={32}/>
           <h1 className="text-2xl font-bold">Control de Mantenimientos Pendientes</h1>
@@ -93,4 +88,3 @@ export default function MaintenanceControl() {
     </div>
   );
 }
-import { CheckCircle } from 'lucide-react';

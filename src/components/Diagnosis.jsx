@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useOrders, useMechanics, updateOrder } from '../lib/firestoreService';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import { ClipboardCheck, Plus, Trash2, FileText, Printer, X } from 'lucide-react';
 
 export default function Diagnosis() {
-  const orders = useLiveQuery(() => db.orders.where('status').equals(ORDER_STATUS.RECEPCION).toArray());
-  const mechanics = useLiveQuery(() => db.mechanics.toArray());
+  const { orders } = useOrders(ORDER_STATUS.RECEPCION);
+  const { mechanics } = useMechanics();
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
 
@@ -19,15 +18,10 @@ export default function Diagnosis() {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [printMode, setPrintMode] = useState(false);
 
-  const selectedOrder = useLiveQuery(
-    () => selectedOrderId ? db.orders.get(selectedOrderId) : null,
-    [selectedOrderId]
-  );
+  // Derive selectedOrder from the list (since it's real-time)
+  const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
-  const assignedMechanic = useLiveQuery(
-    () => mechanicId ? db.mechanics.get(parseInt(mechanicId)) : null,
-    [mechanicId]
-  );
+  const assignedMechanic = mechanics.find(m => m.id === mechanicId);
 
   const handleSelectOrder = (order) => {
     setSelectedOrderId(order.id);
@@ -62,9 +56,9 @@ export default function Diagnosis() {
       return;
     }
     const totals = calculateTotals();
-    await db.orders.update(selectedOrderId, {
+    await updateOrder(selectedOrderId, {
       diagnosis,
-      mechanicId: parseInt(mechanicId),
+      mechanicId: mechanicId, // Store ID as string since Firestore IDs are strings
       items,
       totals,
       commitmentDate,
