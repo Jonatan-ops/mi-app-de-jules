@@ -23,11 +23,10 @@ import MechanicsManager from './MechanicsManager'; // Ensure this is imported if
 // Let's check where it should be. The user said "Only Admin can create/delete mechanics".
 // It is better placed inside Dashboard as a widget or section visible only to Admin.
 
-export default function Dashboard({ setCurrentTab }) {
+export default function Dashboard({ setCurrentTab, searchTerm }) {
   const { userRole } = useAuth();
   const { orders } = useOrders(); // Real-time fetch
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [viewOrderId, setViewOrderId] = useState(null);
 
   // Metrics Calculation
@@ -165,18 +164,6 @@ export default function Dashboard({ setCurrentTab }) {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-bold text-lg text-slate-800">Órdenes Recientes</h3>
-
-              {/* Search in Header */}
-              <div className="relative group hidden sm:block">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"/>
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all w-48"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-              </div>
           </div>
 
           <div className="overflow-x-auto">

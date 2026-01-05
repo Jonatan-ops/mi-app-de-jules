@@ -8,6 +8,7 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +19,8 @@ export default function Login() {
 
     try {
       if (isRegistering) {
-        await register(email, password, "Nuevo Taller");
+        if (!companyName.trim()) throw new Error("El nombre del taller es requerido");
+        await register(email, password, companyName);
       } else {
         await login(email, password);
       }
@@ -50,6 +52,19 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isRegistering && (
+            <div className="animate-fade-in">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nombre del Taller</label>
+              <Input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Ej. Auto Fix Center"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
             <Input

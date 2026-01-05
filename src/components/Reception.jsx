@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { createOrder } from '../lib/firestoreService';
 import { ORDER_STATUS } from '../lib/constants';
 import { PlusCircle, Camera, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Reception() {
+  const { companyId } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -52,7 +54,7 @@ export default function Reception() {
         totals: { subtotal: 0, tax: 0, total: 0 }
       };
 
-      await createOrder(orderData, files);
+      await createOrder(companyId, orderData, files);
 
       // Reset
       setFormData({

@@ -14,6 +14,7 @@ import UserManager from './components/UserManager';
 function AppContent() {
   const { currentUser, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
+  const [searchTerm, setSearchTerm] = useState('');
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium">Cargando sistema...</div>;
@@ -26,7 +27,7 @@ function AppContent() {
   const renderContent = () => {
     switch (currentTab) {
       case 'dashboard':
-        return <Dashboard setCurrentTab={setCurrentTab} />;
+        return <Dashboard setCurrentTab={setCurrentTab} searchTerm={searchTerm} />;
       case 'recepcion':
         return <Reception />;
       case 'diagnostico':
@@ -47,7 +48,7 @@ function AppContent() {
   };
 
   return (
-    <Layout currentTab={currentTab} setCurrentTab={setCurrentTab}>
+    <Layout currentTab={currentTab} setCurrentTab={setCurrentTab} searchTerm={searchTerm} setSearchTerm={setSearchTerm}>
       {renderContent()}
     </Layout>
   );
