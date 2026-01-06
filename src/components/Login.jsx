@@ -40,11 +40,7 @@ export default function Login() {
           <div className="bg-blue-600 text-white p-3 rounded-xl inline-block mb-4 shadow-lg shadow-blue-600/30">
             <Wrench size={40} />
           </div>
-<<<<<<< jules-fd-auto-repair-manager-15324146186387430040
-          <h1 className="text-2xl font-bold text-slate-800">Repair Manager</h1>
-=======
           <h1 className="text-2xl font-bold text-slate-800">FD Auto Repair</h1>
->>>>>>> main
           <p className="text-slate-500">Sistema de Gestión de Taller</p>
         </div>
 
