@@ -1,0 +1,111 @@
+import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Wrench, AlertCircle } from 'lucide-react';
+
+export default function Login() {
+  const { login, register } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isRegistering) {
+        if (!companyName.trim()) throw new Error("El nombre del taller es requerido");
+        await register(email, password, companyName);
+      } else {
+        await login(email, password);
+      }
+    } catch (err) {
+      console.error(err);
+      // Show specific error for debugging
+      setError(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+        <div className="text-center mb-8">
+          <div className="bg-blue-600 text-white p-3 rounded-xl inline-block mb-4 shadow-lg shadow-blue-600/30">
+            <Wrench size={40} />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800">Repair Manager</h1>
+          <p className="text-slate-500">Sistema de Gestión de Taller</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isRegistering && (
+            <div className="animate-fade-in">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nombre del Taller</label>
+              <Input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Ej. Auto Fix Center"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@taller.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+            <Input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full py-3 text-lg"
+            disabled={loading}
+          >
+            {loading ? 'Cargando...' : (isRegistering ? 'Registrar Cuenta' : 'Iniciar Sesión')}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+           <button
+             onClick={() => setIsRegistering(!isRegistering)}
+             className="text-sm text-blue-600 hover:underline"
+           >
+             {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
