@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useOrders, updateOrder } from '../lib/firestoreService';
+import { useOrders } from '../hooks/useFirestoreData';
+import { updateOrder } from '../lib/firestoreService';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import { CheckCircle, Wrench, Clock, Plus, Trash2, Eye, X, Archive, AlertOctagon } from 'lucide-react';
 import { Card } from './ui/Card';

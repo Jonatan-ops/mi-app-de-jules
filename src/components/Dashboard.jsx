@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useOrders } from '../lib/firestoreService';
+import { useOrders } from '../hooks/useFirestoreData';
 import { ORDER_STATUS, formatCurrency } from '../lib/constants';
 import {
   ClipboardCheck,

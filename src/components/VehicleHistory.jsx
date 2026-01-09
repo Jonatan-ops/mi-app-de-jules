@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useOrders } from '../lib/firestoreService';
+import { useOrders } from '../hooks/useFirestoreData';
 import { formatCurrency } from '../lib/constants';
 import { Search, Archive, Calendar, User, FileText, Download, Phone, Mail } from 'lucide-react';
 import { Card } from './ui/Card';

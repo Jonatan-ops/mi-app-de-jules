@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useOrders } from '../lib/firestoreService';
+import { useOrders } from '../hooks/useFirestoreData';
 import { Calendar, AlertCircle, Phone, Car, CheckCircle } from 'lucide-react';
 
 export default function MaintenanceControl() {
